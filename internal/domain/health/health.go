@@ -1,4 +1,4 @@
-package health
+package domain_health
 
 type Health struct {
 	postgres bool

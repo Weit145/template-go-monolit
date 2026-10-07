@@ -108,7 +108,7 @@ func optionalInt(env string) (*int32, error) {
 	if value == "" {
 		return nil, nil
 	}
-	parsed, err := strconv.Atoi(value)
+	parsed, err := strconv.ParseInt(value, 10, 32)
 	if err != nil {
 		return nil, fmt.Errorf("parse %s: %w", env, err)
 	}

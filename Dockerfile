@@ -1,4 +1,4 @@
-FROM golang:1.25-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /src
 
@@ -8,6 +8,18 @@ RUN CGO_ENABLED=0 go install github.com/Weit145/simple-log/cmd/simple-log@3cdeda
 
 COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/app ./cmd/app/main.go
+
+FROM golang:1.26-alpine AS goose-builder
+
+RUN CGO_ENABLED=0 GOBIN=/out go install -tags='no_azuresql no_clickhouse no_libsql no_mssql no_mysql no_sqlite3 no_vertica no_ydb' github.com/pressly/goose/v3/cmd/goose@v3.28.0
+
+FROM alpine:3.22 AS migrator
+
+WORKDIR /app
+COPY --from=goose-builder /out/goose /usr/local/bin/goose
+COPY migrations ./migrations
+ENV GOOSE_DRIVER=postgres GOOSE_MIGRATION_DIR=/app/migrations
+ENTRYPOINT ["goose", "up"]
 
 FROM alpine:3.22
 

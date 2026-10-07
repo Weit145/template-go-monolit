@@ -1,0 +1,37 @@
+version: '3'
+
+vars:
+  GOOSE_VERSION: 'v3.28.0'
+  BIN_DIR: '{{.ROOT_DIR}}/bin'
+  GOOSE: '{{.BIN_DIR}}/goose'
+
+tasks:
+  goose:install:
+    cmds:
+      - GOBIN={{.BIN_DIR}} go install github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}}
+    status:
+      - test -x {{.GOOSE}}
+
+  migrate:up:
+    deps: [goose:install]
+    dotenv: ['.env']
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "${PG_DSN:-postgres://postgres:postgres@localhost:5432/postgres}" up'
+
+  migrate:down:
+    deps: [goose:install]
+    dotenv: ['.env']
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "${PG_DSN:-postgres://postgres:postgres@localhost:5432/postgres}" down'
+
+  migrate:status:
+    deps: [goose:install]
+    dotenv: ['.env']
+    cmds:
+      - '{{.GOOSE}} -dir migrations postgres "${PG_DSN:-postgres://postgres:postgres@localhost:5432/postgres}" status'
+
+  migrate:create:
+    desc: "Создаёт новый файл миграции. Использование: task migrate:create -- <имя_миграции>"
+    deps: [goose:install]
+    cmds:
+      - '{{.GOOSE}} -dir migrations create {{.CLI_ARGS}} sql'
