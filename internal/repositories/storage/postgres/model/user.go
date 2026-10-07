@@ -1,0 +1,8 @@
+package model
+
+import "github.com/google/uuid"
+
+type User struct {
+	Id   uuid.UUID `db:"id"`
+	Name string    `db:"name"`
+}
