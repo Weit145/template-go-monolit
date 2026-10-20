@@ -52,8 +52,13 @@ func run() error {
 	defer repo.Close()
 	slog.Info("Init storage")
 
+	//Init transaction manager
+	trManager, err := postgres.NewTrManager(ctx, repo)
+	if err != nil {
+		return logger.WrapError(ctx, fmt.Errorf("TrManager: %w", err))
+	}
 	//Init usecase
-	ser := usecase.NewService(repo)
+	ser := usecase.NewService(repo, trManager)
 
 	//Init api
 	settings := api.Settings{

@@ -8,11 +8,12 @@ import (
 )
 
 type Service struct {
-	repo port.Repository
+	repo      port.Repository
+	trManager port.TrManager
 }
 
-func NewService(repo port.Repository) *Service {
-	return &Service{repo: repo}
+func NewService(repo port.Repository, trManager port.TrManager) *Service {
+	return &Service{repo: repo, trManager: trManager}
 }
 
 func (s *Service) CheckHealthService(

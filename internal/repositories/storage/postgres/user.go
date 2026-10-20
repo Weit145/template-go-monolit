@@ -7,6 +7,7 @@ import (
 	domain_user "github.com/Weit145/template-go-monolit/internal/domain/user"
 	"github.com/Weit145/template-go-monolit/internal/logger"
 	"github.com/Weit145/template-go-monolit/internal/repositories/storage/postgres/model"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -14,13 +15,7 @@ func (r *Repository) CreateUser(
 	ctx context.Context,
 	user domain_user.User,
 ) (domain_user.User, error) {
-	tx, err := r.db.Begin(ctx)
-	if err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("begin update email verification token tx: %w", err))
-	}
-	defer tx.Rollback(ctx)
-
-	row, err := tx.Query(ctx,
+	row, err := r.ctxGetter.DefaultTrOrDB(ctx, r.db).Query(ctx,
 		`INSERT INTO users (id, name)
 		VALUES ($1, $2)
 		RETURNING id, name`,
@@ -38,10 +33,18 @@ func (r *Repository) CreateUser(
 	if err != nil {
 		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("to domain: %w", err))
 	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("commit user: %w", err))
-	}
-
 	return result, nil
+}
+
+func (r *Repository) DeleteUser(
+	ctx context.Context,
+	id uuid.UUID,
+) error {
+	_, err := r.ctxGetter.DefaultTrOrDB(ctx, r.db).Exec(ctx,
+		`DELETE FROM users
+	 	WHERE users.id = $1`, id)
+	if err != nil {
+		return logger.WrapError(ctx, fmt.Errorf("delete user: %w", err))
+	}
+	return nil
 }

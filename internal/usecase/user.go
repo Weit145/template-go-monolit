@@ -16,9 +16,19 @@ func (s *Service) CreateUser(
 	if err != nil {
 		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create user domain: %w", err))
 	}
-	bdUser, err := s.repo.CreateUser(ctx, user)
+
+	bdUser := domain_user.User{}
+
+	err = s.trManager.Do(ctx, func(ctx context.Context) error {
+		bdUser, err = s.repo.CreateUser(ctx, user)
+		if err != nil {
+			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", err))
+		}
+
+		return s.repo.DeleteUser(ctx, bdUser.ID())
+	})
 	if err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create user repo: %w", err))
+		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create user transaction: %w", err))
 	}
 	return bdUser, nil
 }

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/Weit145/template-go-monolit/internal/logger"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	trmmanager "github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -20,7 +22,8 @@ type Settings struct {
 }
 
 type Repository struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	ctxGetter *trmpgx.CtxGetter
 }
 
 func NewRepository(ctx context.Context, settigs Settings) (*Repository, error) {
@@ -70,7 +73,15 @@ func NewRepository(ctx context.Context, settigs Settings) (*Repository, error) {
 		return nil, logger.WrapError(ctx, fmt.Errorf("ping database: %w", err))
 	}
 
-	return &Repository{db: pool}, nil
+	return &Repository{db: pool, ctxGetter: trmpgx.DefaultCtxGetter}, nil
+}
+
+func NewTrManager(ctx context.Context, repo *Repository) (*trmmanager.Manager, error) {
+	trManager, err := trmmanager.New(trmpgx.NewDefaultFactory(repo.db))
+	if err != nil {
+		return nil, logger.WrapError(ctx, fmt.Errorf("create trmanager: %w", err))
+	}
+	return trManager, nil
 }
 
 func (r *Repository) Close() {
