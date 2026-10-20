@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/Weit145/template-go-monolit/internal/config"
+	"github.com/Weit145/template-go-monolit/internal/infrastructure"
 	"github.com/Weit145/template-go-monolit/internal/logger"
 	"github.com/Weit145/template-go-monolit/internal/repositories/storage/postgres"
 	"github.com/Weit145/template-go-monolit/internal/transport/api"
@@ -57,8 +59,11 @@ func run() error {
 	if err != nil {
 		return logger.WrapError(ctx, fmt.Errorf("TrManager: %w", err))
 	}
+	//Init infastructure
+	inf := infrastructure.NewInfrastructure()
+
 	//Init usecase
-	ser := usecase.NewService(repo, trManager)
+	ser := usecase.NewService(repo, trManager, inf)
 
 	//Init api
 	settings := api.Settings{
@@ -70,9 +75,12 @@ func run() error {
 		IdleTimeout:       cfg.HTTP.IdleTimeout,
 		ShutdownTimeout:   cfg.HTTP.ShutdownTimeout,
 	}
-	if err := api.StartServer(ctx, ser, settings); err != nil {
-		return logger.WrapError(ctx, err)
+	serveErr := api.StartServer(ctx, ser, settings)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), cfg.HTTP.ShutdownTimeout)
+	defer cancel()
+	if err := inf.Shutdown(shutdownCtx); err != nil {
+		serveErr = errors.Join(serveErr, fmt.Errorf("shutdown websocket hub: %w", err))
 	}
-	return nil
+	return logger.WrapError(ctx, serveErr)
 
 }

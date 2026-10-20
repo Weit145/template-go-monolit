@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/netip"
 	"time"
@@ -29,10 +30,13 @@ type httpServer interface {
 }
 
 func StartServer(ctx context.Context, ser v1.UseCase, settings Settings) error {
+	serverCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
 	router := v1.NewRouter(ser, settings.TrustedProxies)
 	slog.Info("Init api")
 
 	server := &http.Server{
+		BaseContext:       func(net.Listener) context.Context { return serverCtx },
 		Addr:              settings.Addr,
 		Handler:           router,
 		ReadHeaderTimeout: settings.ReadHeaderTimeout,
@@ -41,10 +45,9 @@ func StartServer(ctx context.Context, ser v1.UseCase, settings Settings) error {
 		IdleTimeout:       settings.IdleTimeout,
 	}
 	slog.Info("http server started", "addr", settings.Addr)
-	if err := serveHTTP(ctx, server, settings.ShutdownTimeout); err != nil {
-		return logger.WrapError(ctx, err)
-	}
-	return nil
+	serveErr := serveHTTP(ctx, server, settings.ShutdownTimeout)
+	cancel()
+	return logger.WrapError(ctx, serveErr)
 }
 
 func serveHTTP(ctx context.Context, server httpServer, shutdownTimeout time.Duration) error {

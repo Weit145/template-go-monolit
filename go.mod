@@ -5,9 +5,10 @@ go 1.26.0
 require (
 	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.5
 	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.5
+	github.com/coder/websocket v1.8.15
+	github.com/go-chi/chi/v5 v5.5.0
 	github.com/go-playground/validator/v10 v10.30.5
 	github.com/google/uuid v1.6.0
-	github.com/gorilla/mux v1.8.1
 	github.com/jackc/pgx/v5 v5.11.0
 	github.com/swaggo/http-swagger v1.3.4
 )

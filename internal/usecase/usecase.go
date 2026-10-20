@@ -10,10 +10,11 @@ import (
 type Service struct {
 	repo      port.Repository
 	trManager port.TrManager
+	events    port.EventHub
 }
 
-func NewService(repo port.Repository, trManager port.TrManager) *Service {
-	return &Service{repo: repo, trManager: trManager}
+func NewService(repo port.Repository, trManager port.TrManager, events port.EventHub) *Service {
+	return &Service{repo: repo, trManager: trManager, events: events}
 }
 
 func (s *Service) CheckHealthService(
