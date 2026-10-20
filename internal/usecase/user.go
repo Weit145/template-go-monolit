@@ -25,7 +25,11 @@ func (s *Service) CreateUser(
 			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", err))
 		}
 
-		return s.repo.DeleteUser(ctx, bdUser.ID())
+		err = s.repo.DeleteUser(ctx, bdUser.ID())
+		if err != nil {
+			return logger.WrapError(ctx, fmt.Errorf("delete user repo: %w", err))
+		}
+		return nil
 	})
 	if err != nil {
 		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create user transaction: %w", err))
