@@ -2,6 +2,7 @@ package v1_test
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -13,6 +14,7 @@ import (
 	"github.com/Weit145/template-go-monolit/internal/infrastructure"
 	socket "github.com/Weit145/template-go-monolit/internal/infrastructure/websocket"
 	v1 "github.com/Weit145/template-go-monolit/internal/transport/api/v1"
+	"github.com/Weit145/template-go-monolit/internal/transport/api/v1/dto"
 	"github.com/Weit145/template-go-monolit/internal/usecase"
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
@@ -115,7 +117,7 @@ func TestWebSocketLifecycle(t *testing.T) {
 		t.Fatalf("unsubscribe did not take effect: %+v", message)
 	}
 	command("subscribe", watchedUserID)
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, server.URL+"/api/v1/users", strings.NewReader(`{"name":"Alice"}`))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, server.URL+"/api/v1/users/create-and-delete", strings.NewReader(`{"name":"Alice"}`))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -123,9 +125,11 @@ func TestWebSocketLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	var result dto.CreateAndDeleteUserResponse
+	err = json.NewDecoder(response.Body).Decode(&result)
 	_ = response.Body.Close()
-	if response.StatusCode != http.StatusCreated {
-		t.Fatalf("create user status: %d", response.StatusCode)
+	if err != nil || response.StatusCode != http.StatusOK || result.Status != "created_and_deleted" || result.Id != watchedUserID || result.Name != "Alice" {
+		t.Fatalf("create and delete result: status=%d, response=%+v, err=%v", response.StatusCode, result, err)
 	}
 	if err := wsjson.Read(ctx, conn, &message); err != nil {
 		t.Fatal(err)
@@ -152,5 +156,28 @@ func TestWebSocketLifecycle(t *testing.T) {
 	}
 	if _, _, err := idle.Read(ctx); err == nil {
 		t.Fatal("connection remained open after shutdown")
+	}
+}
+
+func TestUserScenarioRoutes(t *testing.T) {
+	hub := infrastructure.NewInfrastructure()
+	service := usecase.NewService(testRepository{id: uuid.New()}, testTransaction{}, hub)
+	router := v1.NewRouter(service, nil)
+	for _, test := range []struct {
+		method string
+		path   string
+		status int
+	}{
+		{method: http.MethodPost, path: "/api/v1/users", status: http.StatusNotFound},
+		{method: http.MethodGet, path: "/api/v1/users/create-and-delete", status: http.StatusMethodNotAllowed},
+	} {
+		t.Run(test.method+" "+test.path, func(t *testing.T) {
+			req := httptest.NewRequest(test.method, test.path, strings.NewReader(`{"name":"Alice"}`))
+			rec := httptest.NewRecorder()
+			router.ServeHTTP(rec, req)
+			if rec.Code != test.status {
+				t.Fatalf("status=%d, want %d", rec.Code, test.status)
+			}
+		})
 	}
 }

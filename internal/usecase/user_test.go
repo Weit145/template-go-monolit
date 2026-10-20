@@ -70,7 +70,7 @@ func (p *eventTestPublisher) Publish(message event.Event) {
 	p.eventID = message.ID
 }
 
-func TestCreateUserPublishesOnlyAfterCommit(t *testing.T) {
+func TestCreateAndDeleteUserPublishesOnlyAfterCommit(t *testing.T) {
 	failure := errors.New("database failure")
 	for _, stage := range []string{"success", "create", "delete", "commit"} {
 		t.Run(stage, func(t *testing.T) {
@@ -86,7 +86,7 @@ func TestCreateUserPublishesOnlyAfterCommit(t *testing.T) {
 			}
 			publisher := &eventTestPublisher{t: t, tx: tx}
 			service := NewService(repo, tx, publisher)
-			user, err := service.CreateUser(context.Background(), "Alice")
+			user, err := service.CreateAndDeleteUser(context.Background(), "Alice")
 			if stage != "success" {
 				if !errors.Is(err, failure) || publisher.calls != 0 {
 					t.Fatalf("failed transaction: err=%v, published=%d", err, publisher.calls)

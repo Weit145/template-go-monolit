@@ -9,25 +9,27 @@ import (
 	"github.com/google/uuid"
 )
 
-type UserRequest struct {
+type CreateAndDeleteUserRequest struct {
 	Name string `json:"name" validate:"required,min=2,max=32"`
 }
 
-func (r *UserRequest) Validate(ctx context.Context) error {
+func (r *CreateAndDeleteUserRequest) Validate(ctx context.Context) error {
 	if err := utils.Struct(ctx, r); err != nil {
 		return err
 	}
 	return nil
 }
 
-type UserResponse struct {
-	Id   uuid.UUID `json:"id"`
-	Name string    `json:"name"`
+type CreateAndDeleteUserResponse struct {
+	Id     uuid.UUID `json:"id"`
+	Name   string    `json:"name"`
+	Status string    `json:"status"`
 }
 
-func NewUserResponse(req domain_user.User) *UserResponse {
-	return &UserResponse{
-		Id:   req.ID(),
-		Name: req.Name(),
+func NewCreateAndDeleteUserResponse(req domain_user.User) *CreateAndDeleteUserResponse {
+	return &CreateAndDeleteUserResponse{
+		Id:     req.ID(),
+		Name:   req.Name(),
+		Status: "created_and_deleted",
 	}
 }

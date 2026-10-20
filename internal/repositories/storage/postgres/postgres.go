@@ -51,29 +51,46 @@ func NewRepository(ctx context.Context, settigs Settings) (*Repository, error) {
 		cfg.MaxConnIdleTime = *settigs.MaxConnIdleTime
 	}
 
-	var pool *pgxpool.Pool
-
-	for i := 1; i <= 10; i++ {
-		pool, err = pgxpool.NewWithConfig(ctx, cfg)
-		if err == nil {
-			break
-		}
-		slog.ErrorContext(logger.ErrorCtx(ctx, err), "Storage no connect", "try", i, slog.Any("error", err))
-		select {
-		case <-ctx.Done():
-			return nil, logger.WrapError(ctx, ctx.Err())
-		case <-time.After(time.Second * 2):
-		}
-	}
+	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
-		return nil, logger.WrapError(ctx, fmt.Errorf("connect to database: %w", err))
+		return nil, logger.WrapError(ctx, fmt.Errorf("create database pool: %w", err))
 	}
-	if err := pool.Ping(ctx); err != nil {
+	if err := pingWithRetry(ctx, pool.Ping, 10, 2*time.Second, 2*time.Second); err != nil {
 		pool.Close()
-		return nil, logger.WrapError(ctx, fmt.Errorf("ping database: %w", err))
+		return nil, logger.WrapError(ctx, err)
 	}
 
 	return &Repository{db: pool, ctxGetter: trmpgx.DefaultCtxGetter}, nil
+}
+
+func pingWithRetry(ctx context.Context, ping func(context.Context) error, attempts int, timeout, pause time.Duration) error {
+	var err error
+	for i := 1; i <= attempts; i++ {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		pingCtx, cancel := context.WithTimeout(ctx, timeout)
+		err = ping(pingCtx)
+		cancel()
+		if err == nil {
+			return nil
+		}
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		slog.WarnContext(ctx, "database ping failed", "try", i, slog.Any("error", err))
+		if i == attempts {
+			break
+		}
+		timer := time.NewTimer(pause)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
+	}
+	return fmt.Errorf("ping database after %d attempts: %w", attempts, err)
 }
 
 func NewTrManager(ctx context.Context, repo *Repository) (*trmmanager.Manager, error) {

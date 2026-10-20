@@ -14,15 +14,15 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, name string) (domain_user.User, error)
+	CreateAndDeleteUser(ctx context.Context, name string) (domain_user.User, error)
 }
 
-func CreateUser(ser UserService) http.HandlerFunc {
+func CreateAndDeleteUser(ser UserService) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		ctx := r.Context()
 
-		var req dto.UserRequest
+		var req dto.CreateAndDeleteUserRequest
 		if err := request.DecodeJSON(w, r, &req); err != nil {
 			slog.DebugContext(ctx, "failed to decode request body", slog.Any("error", err))
 			utils.DecodeFailed(w, err)
@@ -35,7 +35,7 @@ func CreateUser(ser UserService) http.HandlerFunc {
 			return
 		}
 
-		user, err := ser.CreateUser(ctx, req.Name)
+		user, err := ser.CreateAndDeleteUser(ctx, req.Name)
 		if err != nil {
 			logCtx := logger.ErrorCtx(ctx, err)
 			slog.WarnContext(logCtx, "error service", slog.Any("error", err))
@@ -43,10 +43,10 @@ func CreateUser(ser UserService) http.HandlerFunc {
 			return
 		}
 
-		response := dto.NewUserResponse(user)
+		response := dto.NewCreateAndDeleteUserResponse(user)
 
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(response)
 	}
 }

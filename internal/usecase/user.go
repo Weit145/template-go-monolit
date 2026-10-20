@@ -9,7 +9,7 @@ import (
 	"github.com/Weit145/template-go-monolit/internal/logger"
 )
 
-func (s *Service) CreateUser(
+func (s *Service) CreateAndDeleteUser(
 	ctx context.Context,
 	name string,
 ) (domain_user.User, error) {
@@ -33,7 +33,7 @@ func (s *Service) CreateUser(
 		return nil
 	})
 	if err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create user transaction: %w", err))
+		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create and delete user transaction: %w", err))
 	}
 	s.events.Publish(event.Event{
 		ID:   bdUser.ID(),

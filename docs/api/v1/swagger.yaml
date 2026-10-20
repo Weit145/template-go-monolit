@@ -30,32 +30,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  /api/v1/users:
+  /api/v1/users/create-and-delete:
     post:
       tags: [Users]
-      summary: Create a user
-      operationId: createUser
+      summary: Create and delete a user in one transaction
+      description: Runs an INSERT and DELETE in one transaction. On success no user row remains. Returns the user snapshot and the completed operation status.
+      operationId: createAndDeleteUser
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateUserRequest'
+              $ref: '#/components/schemas/CreateAndDeleteUserRequest'
       responses:
-        '201':
-          description: User created.
+        '200':
+          description: Transaction committed. The user was created and deleted; no user row remains.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/UserResponse'
+                $ref: '#/components/schemas/CreateAndDeleteUserResponse'
         '400':
           description: Invalid JSON or user name.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '409':
-          description: User already exists.
           content:
             application/json:
               schema:
@@ -74,7 +69,7 @@ paths:
                 $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
-    CreateUserRequest:
+    CreateAndDeleteUserRequest:
       type: object
       required: [name]
       additionalProperties: false
@@ -84,15 +79,18 @@ components:
           minLength: 2
           maxLength: 32
           example: Alice
-    UserResponse:
+    CreateAndDeleteUserResponse:
       type: object
-      required: [id, name]
+      required: [id, name, status]
       properties:
         id:
           type: string
           format: uuid
         name:
           type: string
+        status:
+          type: string
+          enum: [created_and_deleted]
     StatusResponse:
       type: object
       required: [status]

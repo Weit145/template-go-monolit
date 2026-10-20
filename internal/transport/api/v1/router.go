@@ -22,7 +22,7 @@ func NewRouter(ser UseCase, trustedProxies []netip.Prefix) http.Handler {
 	r.Use(middleware.Recovery, middleware.RequestID, middleware.Logging)
 	r.Get("/ws", handler.WebSocket(ser))
 	r.Get("/_health", handler.Health(ser))
-	r.Post("/api/v1/users", handler.CreateUser(ser))
+	r.Post("/api/v1/users/create-and-delete", handler.CreateAndDeleteUser(ser))
 	r.Get("/swagger/doc.yaml", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/yaml")
 		_, _ = w.Write(docv1.Spec)
