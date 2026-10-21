@@ -11,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type UserRepo interface {
+	CreateUser(
+		ctx context.Context,
+		user domain_user.User,
+	) (domain_user.User, error)
+
+	DeleteUser(
+		ctx context.Context,
+		id uuid.UUID,
+	) error
+}
+
 func (r *Repository) CreateUser(
 	ctx context.Context,
 	user domain_user.User,

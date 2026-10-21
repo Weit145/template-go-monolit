@@ -12,7 +12,22 @@ import (
 	"github.com/google/uuid"
 )
 
-func (s *Service) WebSocket(ctx context.Context, client port.WebSocketClient) (resultErr error) {
+type WebSocketService interface {
+	WebSocket(
+		ctx context.Context,
+		client port.WebSocketClient,
+	) (resultErr error)
+	HandleWebSocketMessage(
+		ctx context.Context,
+		id_conn uuid.UUID,
+		message event.Command,
+	) error
+}
+
+func (s *Service) WebSocket(
+	ctx context.Context,
+	client port.WebSocketClient,
+) (resultErr error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	if !s.events.Registre(client) {
@@ -47,7 +62,11 @@ func (s *Service) WebSocket(ctx context.Context, client port.WebSocketClient) (r
 	}
 }
 
-func (s *Service) HandleWebSocketMessage(ctx context.Context, id_conn uuid.UUID, message event.Command) error {
+func (s *Service) HandleWebSocketMessage(
+	ctx context.Context,
+	id_conn uuid.UUID,
+	message event.Command,
+) error {
 	if message.ID == uuid.Nil {
 		return logger.WrapError(ctx, fmt.Errorf("empty event id: %w", domain_error.ErrInvalidInput))
 	}

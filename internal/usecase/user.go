@@ -9,6 +9,13 @@ import (
 	"github.com/Weit145/template-go-monolit/internal/logger"
 )
 
+type UserService interface {
+	CreateAndDeleteUser(
+		ctx context.Context,
+		name string,
+	) (domain_user.User, error)
+}
+
 func (s *Service) CreateAndDeleteUser(
 	ctx context.Context,
 	name string,

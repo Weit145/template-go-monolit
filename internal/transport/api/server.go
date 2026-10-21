@@ -5,13 +5,11 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"net"
 	"net/http"
 	"net/netip"
 	"time"
 
 	"github.com/Weit145/template-go-monolit/internal/logger"
-	v1 "github.com/Weit145/template-go-monolit/internal/transport/api/v1"
 )
 
 type Settings struct {
@@ -29,24 +27,20 @@ type httpServer interface {
 	Shutdown(context.Context) error
 }
 
-func StartServer(ctx context.Context, ser v1.UseCase, settings Settings) error {
-	serverCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	router := v1.NewRouter(ser, settings.TrustedProxies)
-	slog.Info("Init api")
-
-	server := &http.Server{
-		BaseContext:       func(net.Listener) context.Context { return serverCtx },
+func NewServer(handler http.Handler, settings Settings) *http.Server {
+	return &http.Server{
 		Addr:              settings.Addr,
-		Handler:           router,
+		Handler:           handler,
 		ReadHeaderTimeout: settings.ReadHeaderTimeout,
 		ReadTimeout:       settings.ReadTimeout,
 		WriteTimeout:      settings.WriteTimeout,
 		IdleTimeout:       settings.IdleTimeout,
 	}
-	slog.Info("http server started", "addr", settings.Addr)
-	serveErr := serveHTTP(ctx, server, settings.ShutdownTimeout)
-	cancel()
+}
+
+func StartServer(ctx context.Context, server *http.Server, shutdownTimeout time.Duration) error {
+	slog.Info("http server started", "addr", server.Addr)
+	serveErr := serveHTTP(ctx, server, shutdownTimeout)
 	return logger.WrapError(ctx, serveErr)
 }
 

@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"context"
@@ -17,36 +17,34 @@ type UserService interface {
 	CreateAndDeleteUser(ctx context.Context, name string) (domain_user.User, error)
 }
 
-func CreateAndDeleteUser(ser UserService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
+func (h *handler) CreateAndDeleteUser(w http.ResponseWriter, r *http.Request) {
 
-		ctx := r.Context()
+	ctx := r.Context()
 
-		var req dto.CreateAndDeleteUserRequest
-		if err := request.DecodeJSON(w, r, &req); err != nil {
-			slog.DebugContext(ctx, "failed to decode request body", slog.Any("error", err))
-			utils.DecodeFailed(w, err)
-			return
-		}
-
-		if err := req.Validate(ctx); err != nil {
-			slog.DebugContext(ctx, "failed to validate request body", slog.Any("error", err))
-			utils.MapErr(w, r, err)
-			return
-		}
-
-		user, err := ser.CreateAndDeleteUser(ctx, req.Name)
-		if err != nil {
-			logCtx := logger.ErrorCtx(ctx, err)
-			slog.WarnContext(logCtx, "error service", slog.Any("error", err))
-			utils.MapErr(w, r, err)
-			return
-		}
-
-		response := dto.NewCreateAndDeleteUserResponse(user)
-
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(response)
+	var req dto.CreateAndDeleteUserRequest
+	if err := request.DecodeJSON(w, r, &req); err != nil {
+		slog.DebugContext(ctx, "failed to decode request body", slog.Any("error", err))
+		utils.DecodeFailed(w, err)
+		return
 	}
+
+	if err := req.Validate(ctx); err != nil {
+		slog.DebugContext(ctx, "failed to validate request body", slog.Any("error", err))
+		utils.MapErr(w, r, err)
+		return
+	}
+
+	user, err := h.ser.CreateAndDeleteUser(ctx, req.Name)
+	if err != nil {
+		logCtx := logger.ErrorCtx(ctx, err)
+		slog.WarnContext(logCtx, "error service", slog.Any("error", err))
+		utils.MapErr(w, r, err)
+		return
+	}
+
+	response := dto.NewCreateAndDeleteUserResponse(user)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(response)
 }

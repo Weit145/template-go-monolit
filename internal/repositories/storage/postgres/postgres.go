@@ -21,6 +21,16 @@ type Settings struct {
 	MaxConnIdleTime *time.Duration
 }
 
+type RepositoryInterfase interface {
+	Close()
+	CheckHealth(ctx context.Context) error
+	UserRepo
+}
+
+type TrManagerInterfase interface {
+	Do(ctx context.Context, fn func(ctx context.Context) error) (err error)
+}
+
 type Repository struct {
 	db        *pgxpool.Pool
 	ctxGetter *trmpgx.CtxGetter
@@ -93,10 +103,10 @@ func pingWithRetry(ctx context.Context, ping func(context.Context) error, attemp
 	return fmt.Errorf("ping database after %d attempts: %w", attempts, err)
 }
 
-func NewTrManager(ctx context.Context, repo *Repository) (*trmmanager.Manager, error) {
+func NewTrManager(repo *Repository) (TrManagerInterfase, error) {
 	trManager, err := trmmanager.New(trmpgx.NewDefaultFactory(repo.db))
 	if err != nil {
-		return nil, logger.WrapError(ctx, fmt.Errorf("create trmanager: %w", err))
+		return nil, fmt.Errorf("create trmanager: %w", err)
 	}
 	return trManager, nil
 }

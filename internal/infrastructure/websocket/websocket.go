@@ -9,6 +9,15 @@ import (
 	"github.com/google/uuid"
 )
 
+type HubInfastructure interface {
+	Registre(client port.WebSocketClient) bool
+	UnRegistre(id_conn uuid.UUID)
+	Subscribe(id_conn, event uuid.UUID)
+	UnSubscribe(id_conn, event uuid.UUID)
+	Publish(message domain_event.Event)
+	Shutdown(ctx context.Context) error
+}
+
 type Hub struct {
 	mu      sync.RWMutex
 	clients map[uuid.UUID]port.WebSocketClient

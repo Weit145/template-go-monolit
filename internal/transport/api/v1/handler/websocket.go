@@ -1,4 +1,4 @@
-package handler
+package handlers
 
 import (
 	"context"
@@ -15,18 +15,16 @@ type WebSocketService interface {
 	WebSocket(context.Context, port.WebSocketClient) error
 }
 
-func WebSocket(ser WebSocketService) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		ctx := r.Context()
-		conn, err := websocket.Accept(w, r, nil)
-		if err != nil {
-			slog.DebugContext(ctx, "failed to connect websocket", slog.Any("error", err))
-			return
-		}
-		defer conn.CloseNow()
-		c := client.NewClient(conn)
-		logWebSocketError(ctx, "websocket stopped", ser.WebSocket(ctx, c))
+func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	conn, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		slog.DebugContext(ctx, "failed to connect websocket", slog.Any("error", err))
+		return
 	}
+	defer conn.CloseNow()
+	c := client.NewClient(conn)
+	logWebSocketError(ctx, "websocket stopped", h.ser.WebSocket(ctx, c))
 }
 
 func logWebSocketError(ctx context.Context, message string, err error) {

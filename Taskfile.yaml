@@ -6,6 +6,37 @@ vars:
   GOOSE: '{{.BIN_DIR}}/goose'
 
 tasks:
+  up:
+    desc: Запускает Docker Compose без пересборки
+    cmds:
+      - docker compose up
+
+  build:
+    desc: Собирает Docker-образы и запускает Compose
+    cmds:
+      - docker compose up --build
+
+  down:
+    desc: Останавливает Compose, сохраняя том БД
+    cmds:
+      - docker compose down
+
+  delete:
+    desc: Останавливает Compose и удаляет том БД со всеми данными
+    cmds:
+      - docker compose down -v --remove-orphans
+
+  test:
+    desc: Запускает тесты всех Go-пакетов
+    cmds:
+      - go test ./...
+
+  app:build:
+    desc: Собирает локальный бинарник bin/app
+    cmds:
+      - mkdir -p '{{.BIN_DIR}}'
+      - go build -o '{{.BIN_DIR}}/app' ./cmd/app
+
   goose:install:
     cmds:
       - GOBIN={{.BIN_DIR}} go install github.com/pressly/goose/v3/cmd/goose@{{.GOOSE_VERSION}}
