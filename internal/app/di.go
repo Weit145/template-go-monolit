@@ -17,7 +17,7 @@ type diContainer struct {
 	closer closer.Closer
 
 	db        *postgres.Repository
-	trManager postgres.TrManagerInterfase
+	trManager postgres.TrManager
 	eventBus  events.EventBus
 	service   usecase.ServiceInterfase
 	handler   handlers.Handler
@@ -48,7 +48,7 @@ func (d *diContainer) DB(ctx context.Context) (*postgres.Repository, error) {
 	return d.db, nil
 }
 
-func (d *diContainer) TrManager(ctx context.Context) (postgres.TrManagerInterfase, error) {
+func (d *diContainer) TrManager(ctx context.Context) (postgres.TrManager, error) {
 	if d.trManager == nil {
 		db, err := d.DB(ctx)
 		if err != nil {

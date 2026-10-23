@@ -12,4 +12,5 @@ var (
 	ErrUnavailable   = errors.New("service unavailable")
 	ErrTimeout       = errors.New("upstream timeout")
 	ErrInternal      = errors.New("internal error")
+	ErrDataBase      = errors.New("database error")
 )

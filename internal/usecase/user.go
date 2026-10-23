@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	domain_error "github.com/Weit145/template-go-monolit/internal/domain/error"
 	"github.com/Weit145/template-go-monolit/internal/domain/event"
 	domain_user "github.com/Weit145/template-go-monolit/internal/domain/user"
 	"github.com/Weit145/template-go-monolit/internal/logger"
@@ -30,17 +31,17 @@ func (s *Service) CreateAndDeleteUser(
 	err = s.trManager.Do(ctx, func(ctx context.Context) error {
 		bdUser, err = s.repo.CreateUser(ctx, user)
 		if err != nil {
-			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", err))
+			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", domain_error.ErrDataBase))
 		}
 
 		err = s.repo.DeleteUser(ctx, bdUser.ID())
 		if err != nil {
-			return logger.WrapError(ctx, fmt.Errorf("delete user repo: %w", err))
+			return logger.WrapError(ctx, fmt.Errorf("delete user repo: %w", domain_error.ErrDataBase))
 		}
 		return nil
 	})
 	if err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("create and delete user transaction: %w", err))
+		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("data base transaction: %w", domain_error.ErrDataBase))
 	}
 	s.events.Publish(event.Event{
 		ID:   bdUser.ID(),
