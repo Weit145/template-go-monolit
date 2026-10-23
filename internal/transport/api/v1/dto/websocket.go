@@ -1,4 +1,4 @@
-package websocket
+package dto
 
 import (
 	"github.com/Weit145/template-go-monolit/internal/domain/event"

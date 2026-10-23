@@ -4,13 +4,13 @@ import (
 	"context"
 	"sync"
 
+	"github.com/Weit145/template-go-monolit/internal/domain/event"
 	domain_event "github.com/Weit145/template-go-monolit/internal/domain/event"
-	"github.com/Weit145/template-go-monolit/internal/usecase/port"
 	"github.com/google/uuid"
 )
 
-type HubInfastructure interface {
-	Registre(client port.WebSocketClient) bool
+type Hub interface {
+	Registre(client event.WebSocketClient) bool
 	UnRegistre(id_conn uuid.UUID)
 	Subscribe(id_conn, event uuid.UUID)
 	UnSubscribe(id_conn, event uuid.UUID)
@@ -18,23 +18,23 @@ type HubInfastructure interface {
 	Shutdown(ctx context.Context) error
 }
 
-type Hub struct {
+type hub struct {
 	mu      sync.RWMutex
-	clients map[uuid.UUID]port.WebSocketClient
+	clients map[uuid.UUID]event.WebSocketClient
 	event   map[uuid.UUID]map[uuid.UUID]struct{}
 	closed  bool
 	active  sync.WaitGroup
 }
 
-func NewHub() *Hub {
-	return &Hub{
+func NewHub() Hub {
+	return &hub{
 		mu:      sync.RWMutex{},
-		clients: make(map[uuid.UUID]port.WebSocketClient),
+		clients: make(map[uuid.UUID]event.WebSocketClient),
 		event:   make(map[uuid.UUID]map[uuid.UUID]struct{}),
 	}
 }
 
-func (h *Hub) Registre(client port.WebSocketClient) bool {
+func (h *hub) Registre(client event.WebSocketClient) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if h.closed {
@@ -48,7 +48,7 @@ func (h *Hub) Registre(client port.WebSocketClient) bool {
 	return true
 }
 
-func (h *Hub) UnRegistre(id_conn uuid.UUID) {
+func (h *hub) UnRegistre(id_conn uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if _, exists := h.clients[id_conn]; !exists {
@@ -64,7 +64,7 @@ func (h *Hub) UnRegistre(id_conn uuid.UUID) {
 	h.active.Done()
 }
 
-func (h *Hub) Subscribe(id_conn, event uuid.UUID) {
+func (h *hub) Subscribe(id_conn, event uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -79,7 +79,7 @@ func (h *Hub) Subscribe(id_conn, event uuid.UUID) {
 	h.event[event][id_conn] = struct{}{}
 }
 
-func (h *Hub) UnSubscribe(id_conn, event uuid.UUID) {
+func (h *hub) UnSubscribe(id_conn, event uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
@@ -92,7 +92,7 @@ func (h *Hub) UnSubscribe(id_conn, event uuid.UUID) {
 	}
 }
 
-func (h *Hub) Publish(message domain_event.Event) {
+func (h *hub) Publish(message domain_event.Event) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	for connID := range h.event[message.ID] {
@@ -105,10 +105,10 @@ func (h *Hub) Publish(message domain_event.Event) {
 	}
 }
 
-func (h *Hub) Shutdown(ctx context.Context) error {
+func (h *hub) Shutdown(ctx context.Context) error {
 	h.mu.Lock()
 	h.closed = true
-	clients := make([]port.WebSocketClient, 0, len(h.clients))
+	clients := make([]event.WebSocketClient, 0, len(h.clients))
 	for _, client := range h.clients {
 		clients = append(clients, client)
 	}

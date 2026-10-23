@@ -6,7 +6,7 @@ import (
 
 	"github.com/Weit145/template-go-monolit/internal/closer"
 	"github.com/Weit145/template-go-monolit/internal/config"
-	"github.com/Weit145/template-go-monolit/internal/infrastructure"
+	"github.com/Weit145/template-go-monolit/internal/events"
 	"github.com/Weit145/template-go-monolit/internal/repositories/storage/postgres"
 	handlers "github.com/Weit145/template-go-monolit/internal/transport/api/v1/handler"
 	"github.com/Weit145/template-go-monolit/internal/usecase"
@@ -18,7 +18,7 @@ type diContainer struct {
 
 	db        *postgres.Repository
 	trManager postgres.TrManagerInterfase
-	inf       infrastructure.InfrastructureInterfase
+	eventBus  events.EventBus
 	service   usecase.ServiceInterfase
 	handler   handlers.Handler
 }
@@ -63,13 +63,13 @@ func (d *diContainer) TrManager(ctx context.Context) (postgres.TrManagerInterfas
 	return d.trManager, nil
 }
 
-func (d *diContainer) Infrastructure() infrastructure.InfrastructureInterfase {
-	if d.inf == nil {
-		inf := infrastructure.NewInfrastructure()
-		d.closer.Add("websocket hub", inf.Shutdown)
-		d.inf = inf
+func (d *diContainer) EventBus() events.EventBus {
+	if d.eventBus == nil {
+		eventBus := events.NewEventBus()
+		d.closer.Add("event bus", eventBus.Shutdown)
+		d.eventBus = eventBus
 	}
-	return d.inf
+	return d.eventBus
 }
 
 func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterfase, error) {
@@ -82,7 +82,7 @@ func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterfase, er
 		if err != nil {
 			return nil, err
 		}
-		d.service = usecase.NewService(db, trManager, d.Infrastructure())
+		d.service = usecase.NewService(db, trManager, d.EventBus())
 	}
 	return d.service, nil
 }

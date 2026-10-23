@@ -2,21 +2,23 @@ package usecase
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	domain_error "github.com/Weit145/template-go-monolit/internal/domain/error"
 	"github.com/Weit145/template-go-monolit/internal/domain/event"
 	"github.com/Weit145/template-go-monolit/internal/logger"
-	"github.com/Weit145/template-go-monolit/internal/usecase/port"
 	"github.com/google/uuid"
 )
 
 type WebSocketService interface {
-	WebSocket(
+	RegistreWebSocket(
 		ctx context.Context,
-		client port.WebSocketClient,
-	) (resultErr error)
+		client event.WebSocketClient,
+	) (err error)
+	UnRegistreWebSocket(
+		ctx context.Context,
+		clientID uuid.UUID,
+	) (err error)
 	HandleWebSocketMessage(
 		ctx context.Context,
 		id_conn uuid.UUID,
@@ -24,42 +26,22 @@ type WebSocketService interface {
 	) error
 }
 
-func (s *Service) WebSocket(
+func (s *Service) RegistreWebSocket(
 	ctx context.Context,
-	client port.WebSocketClient,
-) (resultErr error) {
-	ctx, cancel := context.WithCancel(ctx)
-	defer cancel()
+	client event.WebSocketClient,
+) (err error) {
 	if !s.events.Registre(client) {
 		return logger.WrapError(ctx, fmt.Errorf("register websocket: %w", domain_error.ErrUnavailable))
 	}
-	writerDone := make(chan error, 1)
-	defer func() {
-		cancel()
-		_ = client.Close()
-		writeErr := <-writerDone
-		s.events.UnRegistre(client.ClientID())
-		if writeErr != nil && !errors.Is(writeErr, context.Canceled) {
-			if errors.Is(resultErr, context.Canceled) {
-				resultErr = writeErr
-			} else {
-				resultErr = errors.Join(resultErr, writeErr)
-			}
-		}
-	}()
-	go func() {
-		defer cancel()
-		writerDone <- client.WriteMessage(ctx)
-	}()
-	for {
-		message, err := client.ReadeMessage(ctx)
-		if err != nil {
-			return err
-		}
-		if err := s.HandleWebSocketMessage(ctx, client.ClientID(), message); err != nil {
-			return err
-		}
-	}
+	return nil
+}
+
+func (s *Service) UnRegistreWebSocket(
+	ctx context.Context,
+	clientID uuid.UUID,
+) (err error) {
+	s.events.UnRegistre(clientID)
+	return nil
 }
 
 func (s *Service) HandleWebSocketMessage(

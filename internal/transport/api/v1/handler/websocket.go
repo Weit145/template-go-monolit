@@ -6,13 +6,21 @@ import (
 	"log/slog"
 	"net/http"
 
-	client "github.com/Weit145/template-go-monolit/internal/infrastructure/websocket"
-	"github.com/Weit145/template-go-monolit/internal/usecase/port"
+	"github.com/google/uuid"
+
+	"github.com/Weit145/template-go-monolit/internal/domain/event"
+	client "github.com/Weit145/template-go-monolit/internal/transport/api/v1/websocket"
 	"github.com/coder/websocket"
 )
 
 type WebSocketService interface {
-	WebSocket(context.Context, port.WebSocketClient) error
+	RegistreWebSocket(context.Context, event.WebSocketClient) error
+	UnRegistreWebSocket(context.Context, uuid.UUID) error
+	HandleWebSocketMessage(
+		ctx context.Context,
+		id_conn uuid.UUID,
+		message event.Command,
+	) error
 }
 
 func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
@@ -24,7 +32,40 @@ func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.CloseNow()
 	c := client.NewClient(conn)
-	logWebSocketError(ctx, "websocket stopped", h.ser.WebSocket(ctx, c))
+	err = h.ser.RegistreWebSocket(ctx, c)
+	if err != nil {
+		logWebSocketError(ctx, "websocket error", err)
+		return
+	}
+
+	writerDone := make(chan error, 1)
+	defer func() {
+		_ = c.Close()
+		writeErr := <-writerDone
+		err = h.ser.UnRegistreWebSocket(ctx, c.ClientID())
+		if writeErr != nil && !errors.Is(writeErr, context.Canceled) {
+			if errors.Is(err, context.Canceled) {
+				err = writeErr
+			} else {
+				err = errors.Join(err, writeErr)
+			}
+		}
+	}()
+
+	go func() {
+		writerDone <- c.WriteMessage(ctx)
+	}()
+	for {
+		message, err := c.ReadeMessage(ctx)
+		if err != nil {
+			logWebSocketError(ctx, "websocket stopped", err)
+			return
+		}
+		if err := h.ser.HandleWebSocketMessage(ctx, c.ClientID(), message); err != nil {
+			logWebSocketError(ctx, "websocket stopped", err)
+			return
+		}
+	}
 }
 
 func logWebSocketError(ctx context.Context, message string, err error) {

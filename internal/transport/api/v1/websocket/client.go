@@ -7,6 +7,7 @@ import (
 
 	"github.com/Weit145/template-go-monolit/internal/domain/event"
 	"github.com/Weit145/template-go-monolit/internal/logger"
+	"github.com/Weit145/template-go-monolit/internal/transport/api/v1/dto"
 	"github.com/coder/websocket"
 	"github.com/coder/websocket/wsjson"
 	"github.com/google/uuid"
@@ -52,7 +53,7 @@ func (c *Client) WriteMessage(ctx context.Context) error {
 				ctx,
 				5*time.Second,
 			)
-			err := wsjson.Write(writeCtx, c.Conn, NewServerMessage(msg))
+			err := wsjson.Write(writeCtx, c.Conn, dto.NewServerMessage(msg))
 			cancel()
 			if err != nil {
 				return logger.WrapError(ctx, fmt.Errorf("write websocket event: %w", err))
@@ -62,7 +63,7 @@ func (c *Client) WriteMessage(ctx context.Context) error {
 }
 
 func (c *Client) ReadeMessage(ctx context.Context) (event.Command, error) {
-	var msg ClientMessage
+	var msg dto.ClientMessage
 	err := wsjson.Read(ctx, c.Conn, &msg)
 	if err != nil {
 		return event.Command{}, logger.WrapError(ctx, fmt.Errorf("read json: %w", err))
