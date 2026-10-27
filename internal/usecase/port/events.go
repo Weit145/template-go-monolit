@@ -7,10 +7,10 @@ import (
 
 type WebSocketHub interface {
 	Publish(message event.Event)
-	Registre(event.WebSocketClient) bool
-	UnRegistre(id_conn uuid.UUID)
+	Register(event.WebSocketClient) bool
+	Unregister(id_conn uuid.UUID)
 	Subscribe(id_conn, event uuid.UUID)
-	UnSubscribe(id_conn, event uuid.UUID)
+	Unsubscribe(id_conn, event uuid.UUID)
 }
 type EventHub interface {
 	WebSocketHub

@@ -22,20 +22,20 @@ func NewEventBus() EventBus {
 	}
 }
 
-func (e *eventBus) Registre(client event.WebSocketClient) bool {
-	return e.hub.Registre(client)
+func (e *eventBus) Register(client event.WebSocketClient) bool {
+	return e.hub.Register(client)
 }
 
-func (e *eventBus) UnRegistre(id_conn uuid.UUID) {
-	e.hub.UnRegistre(id_conn)
+func (e *eventBus) Unregister(id_conn uuid.UUID) {
+	e.hub.Unregister(id_conn)
 }
 
 func (e *eventBus) Subscribe(id_conn, event uuid.UUID) {
 	e.hub.Subscribe(id_conn, event)
 }
 
-func (e *eventBus) UnSubscribe(id_conn, event uuid.UUID) {
-	e.hub.UnSubscribe(id_conn, event)
+func (e *eventBus) Unsubscribe(id_conn, event uuid.UUID) {
+	e.hub.Unsubscribe(id_conn, event)
 }
 
 func (e *eventBus) Publish(message event.Event) {

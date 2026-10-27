@@ -11,11 +11,11 @@ import (
 )
 
 type WebSocketService interface {
-	RegistreWebSocket(
+	RegisterWebSocket(
 		ctx context.Context,
 		client event.WebSocketClient,
 	) (err error)
-	UnRegistreWebSocket(
+	UnregisterWebSocket(
 		ctx context.Context,
 		clientID uuid.UUID,
 	) (err error)
@@ -26,21 +26,21 @@ type WebSocketService interface {
 	) error
 }
 
-func (s *Service) RegistreWebSocket(
+func (s *Service) RegisterWebSocket(
 	ctx context.Context,
 	client event.WebSocketClient,
 ) (err error) {
-	if !s.events.Registre(client) {
+	if !s.events.Register(client) {
 		return logger.WrapError(ctx, fmt.Errorf("register websocket: %w", domain_error.ErrUnavailable))
 	}
 	return nil
 }
 
-func (s *Service) UnRegistreWebSocket(
+func (s *Service) UnregisterWebSocket(
 	ctx context.Context,
 	clientID uuid.UUID,
 ) (err error) {
-	s.events.UnRegistre(clientID)
+	s.events.Unregister(clientID)
 	return nil
 }
 
@@ -56,7 +56,7 @@ func (s *Service) HandleWebSocketMessage(
 	case "subscribe":
 		s.events.Subscribe(id_conn, message.ID)
 	case "unsubscribe":
-		s.events.UnSubscribe(id_conn, message.ID)
+		s.events.Unsubscribe(id_conn, message.ID)
 	default:
 		return logger.WrapError(ctx, fmt.Errorf("unknown websocket command %q: %w", message.Type, domain_error.ErrInvalidInput))
 	}

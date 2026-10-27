@@ -62,7 +62,7 @@ func (c *Client) WriteMessage(ctx context.Context) error {
 	}
 }
 
-func (c *Client) ReadeMessage(ctx context.Context) (event.Command, error) {
+func (c *Client) ReadMessage(ctx context.Context) (event.Command, error) {
 	var msg dto.ClientMessage
 	err := wsjson.Read(ctx, c.Conn, &msg)
 	if err != nil {

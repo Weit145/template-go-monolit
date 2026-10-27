@@ -8,7 +8,7 @@ import (
 
 type WebSocketClient interface {
 	ClientID() uuid.UUID
-	ReadeMessage(context.Context) (Command, error)
+	ReadMessage(context.Context) (Command, error)
 	WriteMessage(context.Context) error
 	SendMessage(Event) bool
 	Close() error

@@ -20,7 +20,7 @@ type Settings struct {
 	MaxConnIdleTime *time.Duration
 }
 
-type RepositoryInterfase interface {
+type RepositoryInterface interface {
 	UserRepo
 	Close()
 	CheckHealth(ctx context.Context) error

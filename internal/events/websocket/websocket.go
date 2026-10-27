@@ -10,10 +10,10 @@ import (
 )
 
 type Hub interface {
-	Registre(client event.WebSocketClient) bool
-	UnRegistre(id_conn uuid.UUID)
+	Register(client event.WebSocketClient) bool
+	Unregister(id_conn uuid.UUID)
 	Subscribe(id_conn, event uuid.UUID)
-	UnSubscribe(id_conn, event uuid.UUID)
+	Unsubscribe(id_conn, event uuid.UUID)
 	Publish(message domain_event.Event)
 	Shutdown(ctx context.Context) error
 }
@@ -34,7 +34,7 @@ func NewHub() Hub {
 	}
 }
 
-func (h *hub) Registre(client event.WebSocketClient) bool {
+func (h *hub) Register(client event.WebSocketClient) bool {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if h.closed {
@@ -48,7 +48,7 @@ func (h *hub) Registre(client event.WebSocketClient) bool {
 	return true
 }
 
-func (h *hub) UnRegistre(id_conn uuid.UUID) {
+func (h *hub) Unregister(id_conn uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	if _, exists := h.clients[id_conn]; !exists {
@@ -79,7 +79,7 @@ func (h *hub) Subscribe(id_conn, event uuid.UUID) {
 	h.event[event][id_conn] = struct{}{}
 }
 
-func (h *hub) UnSubscribe(id_conn, event uuid.UUID) {
+func (h *hub) Unsubscribe(id_conn, event uuid.UUID) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 

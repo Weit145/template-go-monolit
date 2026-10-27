@@ -7,7 +7,7 @@ import (
 	"github.com/Weit145/template-go-monolit/internal/usecase/port"
 )
 
-type ServiceInterfase interface {
+type ServiceInterface interface {
 	CheckHealthService(
 		ctx context.Context,
 	) (result domain_health.Health, err error)
@@ -21,7 +21,7 @@ type Service struct {
 	events    port.EventHub
 }
 
-func NewService(repo port.Repository, trManager port.TrManager, events port.EventHub) ServiceInterfase {
+func NewService(repo port.Repository, trManager port.TrManager, events port.EventHub) ServiceInterface {
 	return &Service{repo: repo, trManager: trManager, events: events}
 }
 

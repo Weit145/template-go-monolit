@@ -14,8 +14,8 @@ import (
 )
 
 type WebSocketService interface {
-	RegistreWebSocket(context.Context, event.WebSocketClient) error
-	UnRegistreWebSocket(context.Context, uuid.UUID) error
+	RegisterWebSocket(context.Context, event.WebSocketClient) error
+	UnregisterWebSocket(context.Context, uuid.UUID) error
 	HandleWebSocketMessage(
 		ctx context.Context,
 		id_conn uuid.UUID,
@@ -33,7 +33,7 @@ func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.CloseNow()
 	c := client.NewClient(conn)
-	err = h.ser.RegistreWebSocket(ctx, c)
+	err = h.ser.RegisterWebSocket(ctx, c)
 	if err != nil {
 		logWebSocketError(ctx, "websocket error", err)
 		return
@@ -44,7 +44,7 @@ func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
 		cancel()
 		_ = c.Close()
 		writeErr := <-writerDone
-		err = h.ser.UnRegistreWebSocket(ctx, c.ClientID())
+		err = h.ser.UnregisterWebSocket(ctx, c.ClientID())
 		if writeErr != nil && !errors.Is(writeErr, context.Canceled) {
 			if errors.Is(err, context.Canceled) {
 				err = writeErr
@@ -58,7 +58,7 @@ func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
 		writerDone <- c.WriteMessage(ctx)
 	}()
 	for {
-		message, err := c.ReadeMessage(ctx)
+		message, err := c.ReadMessage(ctx)
 		if err != nil {
 			logWebSocketError(ctx, "websocket stopped", err)
 			return

@@ -19,7 +19,7 @@ type diContainer struct {
 	db        *postgres.Repository
 	trManager postgres.TrManager
 	eventBus  events.EventBus
-	service   usecase.ServiceInterfase
+	service   usecase.ServiceInterface
 	handler   handlers.Handler
 }
 
@@ -72,7 +72,7 @@ func (d *diContainer) EventBus() events.EventBus {
 	return d.eventBus
 }
 
-func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterfase, error) {
+func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterface, error) {
 	if d.service == nil {
 		db, err := d.DB(ctx)
 		if err != nil {
