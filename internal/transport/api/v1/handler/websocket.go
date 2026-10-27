@@ -24,7 +24,8 @@ type WebSocketService interface {
 }
 
 func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		slog.DebugContext(ctx, "failed to connect websocket", slog.Any("error", err))
@@ -40,6 +41,7 @@ func (h *handler) WebSocket(w http.ResponseWriter, r *http.Request) {
 
 	writerDone := make(chan error, 1)
 	defer func() {
+		cancel()
 		_ = c.Close()
 		writeErr := <-writerDone
 		err = h.ser.UnRegistreWebSocket(ctx, c.ClientID())
