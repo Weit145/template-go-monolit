@@ -21,7 +21,8 @@ func NewUser(name string) (User, error) {
 	if err != nil {
 		return User{}, fmt.Errorf("invalid name: %w", err)
 	}
-	if len(name) > 32 || len(name) < 2 {
+	rnName := []rune(name)
+	if len(rnName) > 32 || len(rnName) < 2 {
 		return User{}, fmt.Errorf("invalid name: %w", domain_error.ErrInvalidInput)
 	}
 	return User{

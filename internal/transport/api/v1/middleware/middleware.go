@@ -45,19 +45,31 @@ func (rw *responseWriter) Unwrap() http.ResponseWriter {
 	return rw.ResponseWriter
 }
 
+func (rw *responseWriter) Write(p []byte) (int, error) {
+	if rw.status == 0 {
+		rw.WriteHeader(http.StatusOK)
+	}
+	return rw.ResponseWriter.Write(p)
+}
+
 func (rw *responseWriter) WriteHeader(status int) {
+	if rw.status != 0 {
+		return
+	}
 	rw.status = status
 	rw.ResponseWriter.WriteHeader(status)
 }
 
 func Logging(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+
 		start := time.Now()
 
 		rw := &responseWriter{ResponseWriter: w}
 		next.ServeHTTP(rw, r)
 
-		slog.Debug(
+		slog.DebugContext(
+			r.Context(),
 			"HTTP request",
 			"method", r.Method,
 			"path", r.URL.Path,

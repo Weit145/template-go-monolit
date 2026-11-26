@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	domain_error "github.com/Weit145/template-go-monolit/internal/domain/error"
@@ -31,17 +32,17 @@ func (s *Service) CreateAndDeleteUser(
 	err = s.trManager.Do(ctx, func(ctx context.Context) error {
 		bdUser, err = s.repo.CreateUser(ctx, user)
 		if err != nil {
-			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", domain_error.ErrDataBase))
+			return logger.WrapError(ctx, fmt.Errorf("create user repo: %w", errors.Join(err, domain_error.ErrDataBase)))
 		}
 
 		err = s.repo.DeleteUser(ctx, bdUser.ID())
 		if err != nil {
-			return logger.WrapError(ctx, fmt.Errorf("delete user repo: %w", domain_error.ErrDataBase))
+			return logger.WrapError(ctx, fmt.Errorf("delete user repo: %w", errors.Join(err, domain_error.ErrDataBase)))
 		}
 		return nil
 	})
 	if err != nil {
-		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("data base transaction: %w", domain_error.ErrDataBase))
+		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("data base transaction: %w", errors.Join(err, domain_error.ErrDataBase)))
 	}
 	s.events.Publish(event.Event{
 		ID:   bdUser.ID(),

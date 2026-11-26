@@ -14,7 +14,7 @@ import (
 
 var validate = validator.New(validator.WithRequiredStructEnabled())
 
-func MapErr(w http.ResponseWriter, r *http.Request, err error) {
+func MapErr(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain_error.ErrUnauthorized):
 		writeJSON(w, http.StatusUnauthorized, Error("unauthorized"))

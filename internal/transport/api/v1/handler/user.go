@@ -30,7 +30,7 @@ func (h *handler) CreateAndDeleteUser(w http.ResponseWriter, r *http.Request) {
 
 	if err := req.Validate(ctx); err != nil {
 		slog.DebugContext(ctx, "failed to validate request body", slog.Any("error", err))
-		utils.MapErr(w, r, err)
+		utils.MapErr(w, err)
 		return
 	}
 
@@ -38,7 +38,7 @@ func (h *handler) CreateAndDeleteUser(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logCtx := logger.ErrorCtx(ctx, err)
 		slog.WarnContext(logCtx, "error service", slog.Any("error", err))
-		utils.MapErr(w, r, err)
+		utils.MapErr(w, err)
 		return
 	}
 

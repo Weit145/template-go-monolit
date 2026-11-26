@@ -23,11 +23,7 @@ func (h *handler) Health(w http.ResponseWriter, r *http.Request) {
 	if err != nil || !health.IsPostgres() {
 		logCtx := logger.ErrorCtx(ctx, err)
 		slog.WarnContext(logCtx, "gateway is not ready", slog.Any("error", err))
-		if err != nil {
-			utils.MapErr(w, r, err)
-		} else {
-			utils.MapErr(w, r, domain_error.ErrUnavailable)
-		}
+		utils.MapErr(w, domain_error.ErrUnavailable)
 		return
 	}
 
