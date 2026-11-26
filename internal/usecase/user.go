@@ -6,7 +6,6 @@ import (
 	"fmt"
 
 	domain_error "github.com/Weit145/template-go-monolit/internal/domain/error"
-	"github.com/Weit145/template-go-monolit/internal/domain/event"
 	domain_user "github.com/Weit145/template-go-monolit/internal/domain/user"
 	"github.com/Weit145/template-go-monolit/internal/logger"
 )
@@ -44,10 +43,5 @@ func (s *Service) CreateAndDeleteUser(
 	if err != nil {
 		return domain_user.User{}, logger.WrapError(ctx, fmt.Errorf("data base transaction: %w", errors.Join(err, domain_error.ErrDataBase)))
 	}
-	s.events.Publish(event.Event{
-		ID:   bdUser.ID(),
-		Type: "user.created_and_deleted",
-		Data: map[string]any{"id": bdUser.ID(), "name": bdUser.Name()},
-	})
 	return bdUser, nil
 }

@@ -14,17 +14,15 @@ type ServiceInterface interface {
 		ctx context.Context,
 	) (result domain_health.Health, err error)
 	UserService
-	WebSocketService
 }
 
 type Service struct {
 	repo      port.Repository
 	trManager port.TrManager
-	events    port.EventHub
 }
 
-func NewService(repo port.Repository, trManager port.TrManager, events port.EventHub) ServiceInterface {
-	return &Service{repo: repo, trManager: trManager, events: events}
+func NewService(repo port.Repository, trManager port.TrManager) ServiceInterface {
+	return &Service{repo: repo, trManager: trManager}
 }
 
 func (s *Service) CheckHealthService(

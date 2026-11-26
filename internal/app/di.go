@@ -6,7 +6,6 @@ import (
 
 	"github.com/Weit145/template-go-monolit/internal/closer"
 	"github.com/Weit145/template-go-monolit/internal/config"
-	"github.com/Weit145/template-go-monolit/internal/events"
 	"github.com/Weit145/template-go-monolit/internal/repositories/storage/postgres"
 	handlers "github.com/Weit145/template-go-monolit/internal/transport/api/v1/handler"
 	"github.com/Weit145/template-go-monolit/internal/usecase"
@@ -18,7 +17,6 @@ type diContainer struct {
 
 	db        *postgres.Repository
 	trManager postgres.TrManager
-	eventBus  events.EventBus
 	service   usecase.ServiceInterface
 	handler   handlers.Handler
 }
@@ -63,15 +61,6 @@ func (d *diContainer) TrManager(ctx context.Context) (postgres.TrManager, error)
 	return d.trManager, nil
 }
 
-func (d *diContainer) EventBus() events.EventBus {
-	if d.eventBus == nil {
-		eventBus := events.NewEventBus()
-		d.closer.Add("event bus", eventBus.Shutdown)
-		d.eventBus = eventBus
-	}
-	return d.eventBus
-}
-
 func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterface, error) {
 	if d.service == nil {
 		db, err := d.DB(ctx)
@@ -82,7 +71,7 @@ func (d *diContainer) Service(ctx context.Context) (usecase.ServiceInterface, er
 		if err != nil {
 			return nil, err
 		}
-		d.service = usecase.NewService(db, trManager, d.EventBus())
+		d.service = usecase.NewService(db, trManager)
 	}
 	return d.service, nil
 }

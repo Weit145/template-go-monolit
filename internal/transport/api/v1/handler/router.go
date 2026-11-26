@@ -16,7 +16,6 @@ type Handler interface {
 type UseCase interface {
 	HealthService
 	UserService
-	WebSocketService
 }
 
 type handler struct {
@@ -34,7 +33,6 @@ func NewHandler(
 func (h *handler) Routes() http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Recovery, middleware.RequestID, middleware.Logging)
-	r.Get("/ws", h.WebSocket)
 	r.Get("/_health", h.Health)
 	r.Post("/api/v1/users/create-and-delete", h.CreateAndDeleteUser)
 	r.Get("/swagger/doc.yaml", func(w http.ResponseWriter, _ *http.Request) {
