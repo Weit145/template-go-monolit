@@ -31,6 +31,10 @@ go.work.sum
 # Locally installed tools
 bin/
 
+# Local agent skills
+.agents/
+skills-lock.json
+
 # Editor/IDE
 # .idea/
 # .vscode/
